@@ -1,20 +1,72 @@
 // Lab6.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+#include <SFML/Graphics.hpp>
 #include <iostream>
+using namespace sf;
+using namespace std;
 
-int main()
-{
-    std::cout << "Hello World!\n";
+void applyGreenScreenEffect(Image& image, const Color& keyColor, int tolerance) {
+    Vector2u size = image.getSize();
+    for (unsigned int y = 0; y < size.y; ++y) {
+        for (unsigned int x = 0; x < size.x; ++x) {
+            Color pixelColor = image.getPixel(x, y);
+
+            int diff = abs(pixelColor.r - keyColor.r) +
+                abs(pixelColor.g - keyColor.g) +
+                abs(pixelColor.b - keyColor.b);
+
+            if (diff < tolerance) {
+                image.setPixel(x, y, Color(0, 0, 0, 0));
+            }
+        }
+    }
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
+int main() {
+    string backgroundPath = "D://spring 2024/programming/Lab6/backgrounds/winter.png";
+    string foregroundPath = "D://spring 2024/programming/Lab6/characters/yoda.png";
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+    Texture backgroundTex;
+    if (!backgroundTex.loadFromFile(backgroundPath)) {
+        cout << "Couldn't load image" << endl;
+        return -1;
+    }
+
+    Texture foregroundTex;
+    if (!foregroundTex.loadFromFile(foregroundPath)) {
+        cout << "Couldn't load image" << endl;
+        return -1;
+    }
+
+    Image foregroundImage = foregroundTex.copyToImage();
+
+    Color keyColor = Color(0, 255, 0);
+    int tolerance = 100;
+    applyGreenScreenEffect(foregroundImage, keyColor, tolerance);
+
+    foregroundTex.loadFromImage(foregroundImage);
+
+    Sprite backgroundSprite;
+    backgroundSprite.setTexture(backgroundTex);
+
+    Sprite foregroundSprite;
+    foregroundSprite.setTexture(foregroundTex);
+
+    RenderWindow window(VideoMode(1024, 768), "Here's the output");
+
+    while (window.isOpen()) {
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed) {
+                window.close();
+            }
+        }
+        window.clear();
+        window.draw(backgroundSprite);
+        window.draw(foregroundSprite);
+        window.display();
+    }
+
+    return 0;
+}
